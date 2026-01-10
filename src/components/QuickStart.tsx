@@ -11,7 +11,6 @@ interface QuickStartProps {
 /**
  * Quick Start examples demonstrating the pre-loaded schema.
  * The database initializes with: users, posts, categories, post_categories tables
- * These examples showcase CRUD operations and joins on the existing data.
  */
 const examples = [
   {
@@ -80,10 +79,15 @@ export const QuickStart: React.FC<QuickStartProps> = ({ database, onRunExample }
       <div className="mb-4">
         <h2 className="text-lg font-semibold text-foreground mb-1">Quick Start</h2>
         <p className="text-muted-foreground text-sm">
-          Database is pre-loaded with <code className="px-1 py-0.5 bg-muted rounded text-xs">users</code>, 
+          Database is pre-loaded with 
+          <code className="px-1 py-0.5 bg-muted rounded text-xs">users</code>, 
+          <code className="px-1 py-0.5 bg-muted rounded text-xs ml-1">comments</code>, 
           <code className="px-1 py-0.5 bg-muted rounded text-xs ml-1">posts</code>, 
+          <code className="px-1 py-0.5 bg-muted rounded text-xs ml-1">follows</code>, 
+          <code className="px-1 py-0.5 bg-muted rounded text-xs ml-1">likes</code>, 
+          <code className="px-1 py-0.5 bg-muted rounded text-xs ml-1">post_categories</code>,
           <code className="px-1 py-0.5 bg-muted rounded text-xs ml-1">categories</code> tables. 
-          Click any example to load it into the terminal.
+          Click any table to load it into the terminal.
         </p>
       </div>
 
