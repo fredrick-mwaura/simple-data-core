@@ -1,5 +1,22 @@
-// Core type definitions for the RDBMS
-
+/**
+ * =============================================================================
+ * Core Type Definitions for the RDBMS
+ * =============================================================================
+ * 
+ * This file defines the type system for the database:
+ * - Data types supported by columns (int, string, boolean, float)
+ * - Schema definitions for tables and columns
+ * - Query result structures
+ * - Parsed query AST types for each SQL statement
+ * 
+ * DESIGN NOTES:
+ * - RowValue uses a union type to represent possible cell values
+ * - WhereClause captures filter conditions with operator semantics
+ * - Each query type (SELECT, INSERT, etc.) has its own interface
+ * - ParsedQuery is a discriminated union for type-safe query handling
+ * 
+ * =============================================================================
+ */
 export type DataType = 'int' | 'string' | 'boolean' | 'float';
 
 export interface ColumnDef {

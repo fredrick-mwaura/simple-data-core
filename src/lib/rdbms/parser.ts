@@ -1,4 +1,38 @@
-// SQL Parser - converts SQL strings to parsed query objects
+/**
+ * =============================================================================
+ * SQL Parser - Converts SQL strings to structured query objects (AST)
+ * =============================================================================
+ * 
+ * PARSING PIPELINE:
+ * -----------------
+ * 1. TOKENIZATION: Break SQL string into tokens (keywords, identifiers, values)
+ * 2. PARSING: Build Abstract Syntax Tree (AST) from token stream
+ * 3. VALIDATION: Syntax errors are thrown during parsing with meaningful messages
+ * 
+ * SUPPORTED STATEMENTS:
+ * ---------------------
+ * - SELECT: columns, FROM, JOIN, WHERE, ORDER BY, LIMIT
+ * - INSERT: INTO table (columns) VALUES (values)
+ * - UPDATE: table SET column=value WHERE condition
+ * - DELETE: FROM table WHERE condition
+ * - CREATE TABLE: columns with types and constraints
+ * - CREATE INDEX: on table(column)
+ * - DROP TABLE: remove table
+ * 
+ * WHERE CLAUSE OPERATORS:
+ * -----------------------
+ * - Comparison: =, !=, <>, <, >, <=, >=
+ * - Pattern: LIKE (with % and _ wildcards)
+ * - Logical: AND, OR
+ * 
+ * ERROR HANDLING:
+ * ---------------
+ * Parser throws descriptive errors for invalid syntax:
+ * - "Unknown command: X" for unsupported statements
+ * - "Expected X but got Y" for syntax violations
+ * 
+ * =============================================================================
+ */
 
 import {
   ParsedQuery,

@@ -1,4 +1,35 @@
-// B-Tree implementation for indexing
+/**
+ * =============================================================================
+ * B-Tree Implementation for Database Indexing
+ * =============================================================================
+ * 
+ * This B-Tree provides O(log n) lookup for indexed columns.
+ * 
+ * STRUCTURE:
+ * ----------
+ * - ORDER = 4 (max children per node)
+ * - Each node contains: keys[], values[][], children[], isLeaf
+ * - values[i] is an array of row indices for key keys[i]
+ * - Multiple rows can share the same key value (non-unique indexes)
+ * 
+ * OPERATIONS:
+ * -----------
+ * - insert(key, rowIndex): Add a row reference to the tree - O(log n)
+ * - search(key): Find all row indices for a key - O(log n)
+ * - searchRange(from, to): Range query - O(log n + k) where k = results
+ * - delete(key, rowIndex): Remove a row reference - O(log n)
+ * 
+ * USAGE IN QUERY EXECUTION:
+ * -------------------------
+ * When a WHERE clause contains an equality condition on an indexed column,
+ * the query executor uses tree.search() instead of a full table scan.
+ * 
+ * Example: SELECT * FROM users WHERE id = 5
+ * - Without index: Scan all rows, compare id - O(n)
+ * - With index: tree.search(5) returns row indices - O(log n)
+ * 
+ * =============================================================================
+ */
 
 import { RowValue } from './types';
 

@@ -1,7 +1,6 @@
 import React from 'react';
 import { Database } from '@/lib/rdbms/database';
-import { Play, BookOpen, Zap, Table, Users, Package } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Play, BookOpen, Zap, Table, Users, Search, Edit, Trash2 } from 'lucide-react';
 
 interface QuickStartProps {
   database: Database;
@@ -9,37 +8,55 @@ interface QuickStartProps {
   executedQueries?: Set<string>;
 }
 
+/**
+ * Quick Start examples demonstrating the pre-loaded schema.
+ * The database initializes with: users, posts, categories, post_categories tables
+ * These examples showcase CRUD operations and joins on the existing data.
+ */
 const examples = [
   {
-    icon: Table,
-    title: 'Create a table',
-    description: 'Create a users table with columns',
-    sql: `CREATE TABLE users (
-  id INT PRIMARY KEY AUTO_INCREMENT,
-  name STRING NOT NULL,
-  email STRING UNIQUE,
-  active BOOLEAN
-)`
+    icon: Search,
+    title: 'View all users',
+    description: 'Query the pre-loaded users table',
+    sql: `SELECT * FROM users`
   },
   {
-    icon: Users,
-    title: 'Insert data',
-    description: 'Add some sample users',
-    sql: `INSERT INTO users (name, email, active) VALUES 
-  ('Alice Johnson', 'alice@example.com', true),
-  ('Bob Smith', 'bob@example.com', true),
-  ('Charlie Brown', 'charlie@example.com', false)`
+    icon: Play,
+    title: 'Join users & posts',
+    description: 'Inner join to see posts with authors',
+    sql: `SELECT users.username, posts.title, posts.content
+FROM posts
+JOIN users ON posts.user_id = users.id`
   },
   {
     icon: Zap,
-    title: 'Query data',
-    description: 'Select all active users',
+    title: 'Filter with WHERE',
+    description: 'Find active users only',
     sql: `SELECT * FROM users WHERE active = true`
   },
   {
-    icon: Package,
-    title: 'Create products',
-    description: 'Add a products table',
+    icon: Users,
+    title: 'Insert a new user',
+    description: 'Add a new user to the database',
+    sql: `INSERT INTO users (username, email, active) 
+VALUES ('diana', 'diana@example.com', true)`
+  },
+  {
+    icon: Edit,
+    title: 'Update data',
+    description: 'Modify an existing user',
+    sql: `UPDATE users SET active = false WHERE username = 'bob'`
+  },
+  {
+    icon: Trash2,
+    title: 'Delete data',
+    description: 'Remove a user from the database',
+    sql: `DELETE FROM users WHERE username = 'charlie'`
+  },
+  {
+    icon: Table,
+    title: 'Create new table',
+    description: 'Define a new products table',
     sql: `CREATE TABLE products (
   id INT PRIMARY KEY AUTO_INCREMENT,
   name STRING NOT NULL,
@@ -49,59 +66,47 @@ const examples = [
   },
   {
     icon: BookOpen,
-    title: 'Create orders',
-    description: 'Orders table with foreign keys',
-    sql: `CREATE TABLE orders (
-  id INT PRIMARY KEY AUTO_INCREMENT,
-  user_id INT NOT NULL,
-  product_id INT NOT NULL,
-  quantity INT,
-  created_at STRING
-)`
-  },
-  {
-    icon: Play,
-    title: 'Join tables',
-    description: 'Query across multiple tables',
-    sql: `SELECT users.name, orders.quantity 
-FROM orders 
-JOIN users ON orders.user_id = users.id`
+    title: 'Left join example',
+    description: 'Include users without posts',
+    sql: `SELECT users.username, posts.title
+FROM users
+LEFT JOIN posts ON users.id = posts.user_id`
   }
 ];
 
 export const QuickStart: React.FC<QuickStartProps> = ({ database, onRunExample }) => {
   return (
-    <div className="p-6">
-      <div className="mb-6">
-        <h2 className="text-xl font-semibold text-foreground mb-2">Quick Start</h2>
+    <div className="p-6 h-full overflow-y-auto">
+      <div className="mb-4">
+        <h2 className="text-lg font-semibold text-foreground mb-1">Quick Start</h2>
         <p className="text-muted-foreground text-sm">
-          Click any example to run it in the terminal
+          Database is pre-loaded with <code className="px-1 py-0.5 bg-muted rounded text-xs">users</code>, 
+          <code className="px-1 py-0.5 bg-muted rounded text-xs ml-1">posts</code>, 
+          <code className="px-1 py-0.5 bg-muted rounded text-xs ml-1">categories</code> tables. 
+          Click any example to load it into the terminal.
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
         {examples.map((example, idx) => (
           <button
             key={idx}
             onClick={() => onRunExample(example.sql)}
-            className="group text-left p-4 rounded-lg border border-border bg-card hover:bg-muted/50 hover:border-primary/50 transition-all"
+            className="group text-left p-3 rounded-lg border border-border bg-card hover:bg-muted/50 hover:border-primary/50 transition-all"
           >
-            <div className="flex items-start gap-3">
-              <div className="p-2 rounded-md bg-primary/10 text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
-                <example.icon className="w-4 h-4" />
+            <div className="flex items-start gap-2">
+              <div className="p-1.5 rounded-md bg-primary/10 text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
+                <example.icon className="w-3.5 h-3.5" />
               </div>
               <div className="flex-1 min-w-0">
-                <h3 className="font-medium text-foreground group-hover:text-primary transition-colors">
+                <h3 className="font-medium text-sm text-foreground group-hover:text-primary transition-colors">
                   {example.title}
                 </h3>
-                <p className="text-xs text-muted-foreground mt-1">
+                <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">
                   {example.description}
                 </p>
               </div>
             </div>
-            <pre className="mt-3 p-2 rounded bg-terminal-bg text-xs font-mono text-muted-foreground overflow-x-auto whitespace-pre-wrap">
-              {example.sql.length > 80 ? example.sql.slice(0, 80) + '...' : example.sql}
-            </pre>
           </button>
         ))}
       </div>

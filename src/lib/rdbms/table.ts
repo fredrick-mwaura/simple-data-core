@@ -1,4 +1,31 @@
-// Table implementation with CRUD operations and indexing
+/**
+ * =============================================================================
+ * Table Implementation - Row Storage and Index Management
+ * =============================================================================
+ * 
+ * ROW STORAGE:
+ * ------------
+ * - Rows are stored as an array of Record<string, RowValue> objects
+ * - Each row is a map from column name to value
+ * - Deleted rows are tracked via a Set of indices (soft delete)
+ * - This allows index references to remain valid after deletes
+ * 
+ * INDEX MANAGEMENT:
+ * -----------------
+ * - B-Tree indexes are automatically created for PRIMARY KEY and UNIQUE columns
+ * - Additional indexes can be created via CREATE INDEX
+ * - Indexes are automatically maintained during INSERT, UPDATE, DELETE
+ * - Query executor uses indexes for equality-based lookups (O(log n) vs O(n))
+ * 
+ * CONSTRAINT ENFORCEMENT:
+ * -----------------------
+ * - PRIMARY KEY: Unique, not null, auto-indexed
+ * - UNIQUE: Checked via index lookup before insert/update
+ * - NOT NULL: Validated during insert/update
+ * - AUTO_INCREMENT: Counter maintained per-column
+ * 
+ * =============================================================================
+ */
 
 import { ColumnDef, Row, RowValue, DataType } from './types';
 import { BTree } from './btree';
@@ -153,16 +180,27 @@ export class Table {
       .filter((row): row is Row => row !== null);
   }
 
+  /**
+   * Select rows with a WHERE condition.
+   * 
+   * INDEX USAGE STRATEGY:
+   * - For equality (=) operators on indexed columns: Use B-Tree lookup O(log n)
+   * - For all other operators or non-indexed columns: Full table scan O(n)
+   * 
+   * This is a key optimization point - the query executor automatically
+   * takes advantage of available indexes for equality-based queries.
+   */
   selectWhere(column: string, operator: string, value: RowValue, columns?: string[]): Row[] {
     let indices: number[];
 
-    // Try to use index for equality lookups
+    // QUERY PLANNING: Determine if we can use an index
     const index = this.findIndexForColumn(column);
     
     if (index && operator === '=') {
+      // INDEX SCAN: Use B-Tree for O(log n) lookup
       indices = index.tree.search(value);
     } else {
-      // Full table scan
+      // FULL TABLE SCAN: No applicable index, scan all rows O(n)
       indices = [];
       this.rows.forEach((row, idx) => {
         if (!this.deletedIndices.has(idx) && this.evaluateCondition(row[column], operator, value)) {
