@@ -53,6 +53,9 @@ import {
 } from './types';
 
 export class Database {
+  query(sql: string) {
+    throw new Error('Method not implemented.');
+  }
   private tables: Map<string, Table> = new Map();
   private name: string;
 
@@ -69,17 +72,17 @@ export class Database {
    */
   execute(sql: string): QueryResult {
     const startTime = performance.now();
-    
+
     try {
       // PHASE 1: PARSING - Convert SQL string to AST
       const query = parse(sql);
-      
+
       // PHASE 2-4: VALIDATION, PLANNING, EXECUTION
       // These phases are combined in executeQuery for simplicity
       // Validation happens when accessing tables/columns
       // Planning includes index selection for WHERE clauses
       const result = this.executeQuery(query);
-      
+
       result.executionTime = performance.now() - startTime;
       return result;
     } catch (error) {
@@ -209,7 +212,7 @@ export class Database {
 
     try {
       let rows: Row[];
-      const columns = query.columns === '*' 
+      const columns = query.columns === '*'
         ? table.columns.map(c => c.name)
         : query.columns;
 
@@ -337,7 +340,7 @@ export class Database {
 
     if (join.type === 'RIGHT') {
       // Swap for right join
-      return this.performJoin(rightRows, leftRows, 
+      return this.performJoin(rightRows, leftRows,
         { ...join, type: 'LEFT', leftColumn: join.rightColumn, rightColumn: join.leftColumn },
         rightTableName, leftTableName);
     }
@@ -411,19 +414,21 @@ export class Database {
     }
 
     try {
-      let count: number;
+      let updatedRows: Row[];
 
       if (query.where && query.where.length > 0) {
         const clause = query.where[0];
-        count = table.update(query.set, clause.column, clause.operator, clause.value);
+        updatedRows = table.update(query.set, clause.column, clause.operator, clause.value);
       } else {
-        count = table.update(query.set);
+        updatedRows = table.update(query.set);
       }
 
       return {
         success: true,
-        message: `Updated ${count} row(s)`,
-        rowCount: count
+        message: `Updated ${updatedRows.length} row(s)`,
+        rowCount: updatedRows.length,
+        rows: updatedRows,
+        columns: updatedRows.length > 0 ? Object.keys(updatedRows[0]) : undefined
       };
     } catch (error) {
       return {
@@ -440,19 +445,21 @@ export class Database {
     }
 
     try {
-      let count: number;
+      let deletedRows: Row[];
 
       if (query.where && query.where.length > 0) {
         const clause = query.where[0];
-        count = table.delete(clause.column, clause.operator, clause.value);
+        deletedRows = table.delete(clause.column, clause.operator, clause.value);
       } else {
-        count = table.delete();
+        deletedRows = table.delete();
       }
 
       return {
         success: true,
-        message: `Deleted ${count} row(s)`,
-        rowCount: count
+        message: `Deleted ${deletedRows.length} row(s)`,
+        rowCount: deletedRows.length,
+        rows: deletedRows,
+        columns: deletedRows.length > 0 ? Object.keys(deletedRows[0]) : undefined
       };
     } catch (error) {
       return {
@@ -497,7 +504,7 @@ export class Database {
   // Serialize database for persistence
   serialize(): string {
     const data: Record<string, { schema: any; rows: Row[] }> = {};
-    
+
     for (const [name, table] of this.tables) {
       data[name] = {
         schema: {
@@ -518,7 +525,7 @@ export class Database {
 
     for (const [tableName, tableData] of Object.entries(data)) {
       const { schema, rows } = tableData as { schema: any; rows: Row[] };
-      
+
       // Create table
       const table = new Table(schema.name, schema.columns);
       db.tables.set(tableName, table);
@@ -542,40 +549,53 @@ let globalDB: Database | null = null;
  * internal table and schema abstractions as dynamically declared tables.
  */
 function initializeDefaultSchema(db: Database): void {
-  // Create users table - demonstrates PRIMARY KEY, UNIQUE, NOT NULL, AUTO_INCREMENT
+  // Create users table
   db.execute(`
     CREATE TABLE users (
       id INT PRIMARY KEY AUTO_INCREMENT,
       username STRING UNIQUE NOT NULL,
       email STRING UNIQUE NOT NULL,
-      active BOOLEAN
+      password_hash STRING,
+      is_active BOOLEAN,
+      created_at INT,
+      updated_at INT
     )
   `);
 
-  // Create posts table - demonstrates foreign key relationship pattern
+  // Create posts table
   db.execute(`
     CREATE TABLE posts (
       id INT PRIMARY KEY AUTO_INCREMENT,
       user_id INT NOT NULL,
       title STRING NOT NULL,
       content STRING,
-      created_at INT
+      created_at INT,
+      updated_at INT
     )
   `);
 
-  // Create an index on posts.user_id for efficient joins
-  db.execute(`CREATE INDEX idx_posts_user_id ON posts(user_id)`);
+  // Create comments table
+  db.execute(`
+    CREATE TABLE comments (
+      id INT PRIMARY KEY AUTO_INCREMENT,
+      post_id INT NOT NULL,
+      user_id INT NOT NULL,
+      content STRING,
+      created_at INT,
+      updated_at INT
+    )
+  `);
 
   // Create categories table
   db.execute(`
     CREATE TABLE categories (
       id INT PRIMARY KEY AUTO_INCREMENT,
       name STRING UNIQUE NOT NULL,
-      description STRING
+      created_at INT
     )
   `);
 
-  // Create post_categories junction table for many-to-many relationship
+  // Create post_categories table
   db.execute(`
     CREATE TABLE post_categories (
       post_id INT NOT NULL,
@@ -583,21 +603,66 @@ function initializeDefaultSchema(db: Database): void {
     )
   `);
 
-  // Insert sample data to make the database immediately queryable
-  db.execute(`INSERT INTO users (username, email, active) VALUES ('alice', 'alice@example.com', true)`);
-  db.execute(`INSERT INTO users (username, email, active) VALUES ('bob', 'bob@example.com', true)`);
-  db.execute(`INSERT INTO users (username, email, active) VALUES ('charlie', 'charlie@example.com', false)`);
+  // Create likes table
+  db.execute(`
+    CREATE TABLE likes (
+      id INT PRIMARY KEY AUTO_INCREMENT,
+      user_id INT NOT NULL,
+      post_id INT NOT NULL,
+      created_at INT
+    )
+  `);
 
-  db.execute(`INSERT INTO posts (user_id, title, content, created_at) VALUES (1, 'Hello World', 'My first post!', 1704067200)`);
-  db.execute(`INSERT INTO posts (user_id, title, content, created_at) VALUES (1, 'SQL Tips', 'Advanced SQL techniques...', 1704153600)`);
-  db.execute(`INSERT INTO posts (user_id, title, content, created_at) VALUES (2, 'Welcome', 'Bob here, nice to meet you!', 1704240000)`);
+  // Create follows table
+  db.execute(`
+    CREATE TABLE follows (
+      id INT PRIMARY KEY AUTO_INCREMENT,
+      follower_id INT NOT NULL,
+      following_id INT NOT NULL,
+      created_at INT
+    )
+  `);
 
-  db.execute(`INSERT INTO categories (name, description) VALUES ('Technology', 'Tech-related posts')`);
-  db.execute(`INSERT INTO categories (name, description) VALUES ('Tutorial', 'How-to guides')`);
+  // Create indexes for performance
+  db.execute(`CREATE INDEX idx_posts_user_id ON posts(user_id)`);
+  db.execute(`CREATE INDEX idx_comments_post_id ON comments(post_id)`);
+  db.execute(`CREATE INDEX idx_likes_post_id ON likes(post_id)`);
 
+  // Insert sample data
+  const now = Math.floor(Date.now() / 1000);
+  const yesterday = now - 86400;
+
+  // Users
+  db.execute(`INSERT INTO users (username, email, password_hash, is_active, created_at, updated_at) VALUES ('alice', 'alice@example.com', 'hash123', true, ${yesterday}, ${yesterday})`);
+  db.execute(`INSERT INTO users (username, email, password_hash, is_active, created_at, updated_at) VALUES ('bob', 'bob@example.com', 'hash456', true, ${yesterday}, ${yesterday})`);
+  db.execute(`INSERT INTO users (username, email, password_hash, is_active, created_at, updated_at) VALUES ('charlie', 'charlie@example.com', 'hash789', false, ${now}, ${now})`);
+
+  // Categories
+  db.execute(`INSERT INTO categories (name, created_at) VALUES ('Technology', ${yesterday})`);
+  db.execute(`INSERT INTO categories (name, created_at) VALUES ('Travel', ${yesterday})`);
+  db.execute(`INSERT INTO categories (name, created_at) VALUES ('Food', ${now})`);
+
+  // Posts
+  db.execute(`INSERT INTO posts (user_id, title, content, created_at, updated_at) VALUES (1, 'Hello World', 'My first post!', ${yesterday}, ${yesterday})`);
+  db.execute(`INSERT INTO posts (user_id, title, content, created_at, updated_at) VALUES (1, 'SQL Tips', 'Advanced SQL techniques...', ${now}, ${now})`);
+  db.execute(`INSERT INTO posts (user_id, title, content, created_at, updated_at) VALUES (2, 'Welcome', 'Bob here, nice to meet you!', ${now}, ${now})`);
+
+  // Comments
+  db.execute(`INSERT INTO comments (post_id, user_id, content, created_at, updated_at) VALUES (1, 2, 'Great post Alice!', ${now}, ${now})`);
+  db.execute(`INSERT INTO comments (post_id, user_id, content, created_at, updated_at) VALUES (2, 2, 'Thanks for sharing', ${now}, ${now})`);
+
+  // Post Categories
   db.execute(`INSERT INTO post_categories (post_id, category_id) VALUES (1, 1)`);
   db.execute(`INSERT INTO post_categories (post_id, category_id) VALUES (2, 1)`);
   db.execute(`INSERT INTO post_categories (post_id, category_id) VALUES (2, 2)`);
+
+  // Likes
+  db.execute(`INSERT INTO likes (user_id, post_id, created_at) VALUES (2, 1, ${now})`);
+  db.execute(`INSERT INTO likes (user_id, post_id, created_at) VALUES (3, 1, ${now})`);
+
+  // Follows
+  db.execute(`INSERT INTO follows (follower_id, following_id, created_at) VALUES (2, 1, ${now})`); // Bob follows Alice
+  db.execute(`INSERT INTO follows (follower_id, following_id, created_at) VALUES (3, 1, ${now})`); // Charlie follows Alice
 }
 
 export function getDatabase(): Database {

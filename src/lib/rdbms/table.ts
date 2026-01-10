@@ -165,7 +165,7 @@ export class Table {
 
   select(columns?: string[]): Row[] {
     const colsToSelect = columns || this.columns.map(c => c.name);
-    
+
     return this.rows
       .map((row, idx) => {
         if (this.deletedIndices.has(idx)) return null;
@@ -195,7 +195,7 @@ export class Table {
 
     // QUERY PLANNING: Determine if we can use an index
     const index = this.findIndexForColumn(column);
-    
+
     if (index && operator === '=') {
       // INDEX SCAN: Use B-Tree for O(log n) lookup
       indices = index.tree.search(value);
@@ -261,8 +261,8 @@ export class Table {
     return undefined;
   }
 
-  update(setValues: Partial<Row>, whereColumn?: string, whereOp?: string, whereValue?: RowValue): number {
-    let count = 0;
+  update(setValues: Partial<Row>, whereColumn?: string, whereOp?: string, whereValue?: RowValue): Row[] {
+    const updatedRows: Row[] = [];
     const indicesToUpdate: number[] = [];
 
     // Find rows to update
@@ -272,8 +272,8 @@ export class Table {
         indicesToUpdate.push(...index.tree.search(whereValue!));
       } else {
         this.rows.forEach((row, idx) => {
-          if (!this.deletedIndices.has(idx) && 
-              this.evaluateCondition(row[whereColumn], whereOp || '=', whereValue!)) {
+          if (!this.deletedIndices.has(idx) &&
+            this.evaluateCondition(row[whereColumn], whereOp || '=', whereValue!)) {
             indicesToUpdate.push(idx);
           }
         });
@@ -330,14 +330,14 @@ export class Table {
         }
       }
 
-      count++;
+      updatedRows.push({ ...row });
     }
 
-    return count;
+    return updatedRows;
   }
 
-  delete(whereColumn?: string, whereOp?: string, whereValue?: RowValue): number {
-    let count = 0;
+  delete(whereColumn?: string, whereOp?: string, whereValue?: RowValue): Row[] {
+    const deletedRows: Row[] = [];
     const indicesToDelete: number[] = [];
 
     if (whereColumn) {
@@ -346,8 +346,8 @@ export class Table {
         indicesToDelete.push(...index.tree.search(whereValue!));
       } else {
         this.rows.forEach((row, idx) => {
-          if (!this.deletedIndices.has(idx) && 
-              this.evaluateCondition(row[whereColumn], whereOp || '=', whereValue!)) {
+          if (!this.deletedIndices.has(idx) &&
+            this.evaluateCondition(row[whereColumn], whereOp || '=', whereValue!)) {
             indicesToDelete.push(idx);
           }
         });
@@ -371,10 +371,10 @@ export class Table {
       }
 
       this.deletedIndices.add(idx);
-      count++;
+      deletedRows.push({ ...row });
     }
 
-    return count;
+    return deletedRows;
   }
 
   getRowCount(): number {

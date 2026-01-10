@@ -1,8 +1,8 @@
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap');
 
 @layer base {
   :root {
@@ -149,4 +149,46 @@
     from { opacity: 0; transform: translateX(-8px); }
     to { opacity: 1; transform: translateX(0); }
   }
+}
+
+/* Resizable Panels */
+[data-panel-group] {
+  --panel-group-direction: row;
+}
+
+[data-panel-group][data-panel-group-direction="row"] {
+  flex-direction: row;
+}
+
+[data-panel-group][data-panel-group-direction="column"] {
+  flex-direction: column;
+}
+
+/* Smooth transitions for resizing */
+[data-panel-group] > [data-panel] {
+  transition: flex-basis 0.2s ease;
+}
+
+/* Hide the default scrollbar for panels */
+[data-panel] > * {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+[data-panel] > *::-webkit-scrollbar {
+  display: none;
+}
+
+/* Terminal panel specific styles */
+.terminal-panel {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Ensure the terminal takes full height */
+.terminal-container {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
 }
