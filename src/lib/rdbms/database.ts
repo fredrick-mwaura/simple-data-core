@@ -1,4 +1,39 @@
-// Main Database class - orchestrates tables, parsing, and query execution
+/**
+ * =============================================================================
+ * LovableDB - A Lightweight In-Memory Relational Database Management System
+ * =============================================================================
+ * 
+ * ARCHITECTURE OVERVIEW:
+ * ----------------------
+ * This RDBMS implements a clear execution pipeline:
+ * 
+ *   1. PARSING:     SQL string → ParsedQuery AST (parser.ts)
+ *   2. VALIDATION:  Check table/column existence, type compatibility
+ *   3. PLANNING:    Determine index usage, join strategy
+ *   4. EXECUTION:   Apply operations to table storage
+ *   5. STORAGE:     Row-based storage with B-Tree indexes (table.ts, btree.ts)
+ * 
+ * DESIGN DECISIONS:
+ * -----------------
+ * - In-memory storage: All data lives in JavaScript objects for simplicity
+ * - B-Tree indexing: Automatically maintained for PRIMARY KEY and UNIQUE columns
+ * - Index-aware execution: Equality queries on indexed columns use B-Tree lookup
+ * - Nested-loop joins: Simple but correct join implementation (prioritizing correctness)
+ * - Soft deletes: Deleted rows are marked, not removed, to preserve index consistency
+ * 
+ * SCHEMA REPRESENTATION:
+ * ----------------------
+ * - TableSchema: { name, columns[] } where each column has { name, type, constraints }
+ * - Supported types: int, string, boolean, float
+ * - Constraints: PRIMARY KEY, UNIQUE, NOT NULL, AUTO_INCREMENT
+ * 
+ * QUERY EXECUTION:
+ * ----------------
+ * All data access goes through the SQL interface. Direct object mutation is not exposed.
+ * The execute() method is the single entry point for all database operations.
+ * 
+ * =============================================================================
+ */
 
 import { Table } from './table';
 import { parse } from './parser';
@@ -25,12 +60,26 @@ export class Database {
     this.name = name;
   }
 
+  /**
+   * Execute a SQL query through the complete pipeline:
+   * Parse → Validate → Plan → Execute → Return Result
+   * 
+   * This is the ONLY way to interact with the database.
+   * All CRUD operations must go through this interface.
+   */
   execute(sql: string): QueryResult {
     const startTime = performance.now();
     
     try {
+      // PHASE 1: PARSING - Convert SQL string to AST
       const query = parse(sql);
+      
+      // PHASE 2-4: VALIDATION, PLANNING, EXECUTION
+      // These phases are combined in executeQuery for simplicity
+      // Validation happens when accessing tables/columns
+      // Planning includes index selection for WHERE clauses
       const result = this.executeQuery(query);
+      
       result.executionTime = performance.now() - startTime;
       return result;
     } catch (error) {
@@ -487,13 +536,79 @@ export class Database {
 // Singleton database instance
 let globalDB: Database | null = null;
 
+/**
+ * Initialize the database with a default relational schema.
+ * This demonstrates that the schema is created using the same
+ * internal table and schema abstractions as dynamically declared tables.
+ */
+function initializeDefaultSchema(db: Database): void {
+  // Create users table - demonstrates PRIMARY KEY, UNIQUE, NOT NULL, AUTO_INCREMENT
+  db.execute(`
+    CREATE TABLE users (
+      id INT PRIMARY KEY AUTO_INCREMENT,
+      username STRING UNIQUE NOT NULL,
+      email STRING UNIQUE NOT NULL,
+      active BOOLEAN
+    )
+  `);
+
+  // Create posts table - demonstrates foreign key relationship pattern
+  db.execute(`
+    CREATE TABLE posts (
+      id INT PRIMARY KEY AUTO_INCREMENT,
+      user_id INT NOT NULL,
+      title STRING NOT NULL,
+      content STRING,
+      created_at INT
+    )
+  `);
+
+  // Create an index on posts.user_id for efficient joins
+  db.execute(`CREATE INDEX idx_posts_user_id ON posts(user_id)`);
+
+  // Create categories table
+  db.execute(`
+    CREATE TABLE categories (
+      id INT PRIMARY KEY AUTO_INCREMENT,
+      name STRING UNIQUE NOT NULL,
+      description STRING
+    )
+  `);
+
+  // Create post_categories junction table for many-to-many relationship
+  db.execute(`
+    CREATE TABLE post_categories (
+      post_id INT NOT NULL,
+      category_id INT NOT NULL
+    )
+  `);
+
+  // Insert sample data to make the database immediately queryable
+  db.execute(`INSERT INTO users (username, email, active) VALUES ('alice', 'alice@example.com', true)`);
+  db.execute(`INSERT INTO users (username, email, active) VALUES ('bob', 'bob@example.com', true)`);
+  db.execute(`INSERT INTO users (username, email, active) VALUES ('charlie', 'charlie@example.com', false)`);
+
+  db.execute(`INSERT INTO posts (user_id, title, content, created_at) VALUES (1, 'Hello World', 'My first post!', 1704067200)`);
+  db.execute(`INSERT INTO posts (user_id, title, content, created_at) VALUES (1, 'SQL Tips', 'Advanced SQL techniques...', 1704153600)`);
+  db.execute(`INSERT INTO posts (user_id, title, content, created_at) VALUES (2, 'Welcome', 'Bob here, nice to meet you!', 1704240000)`);
+
+  db.execute(`INSERT INTO categories (name, description) VALUES ('Technology', 'Tech-related posts')`);
+  db.execute(`INSERT INTO categories (name, description) VALUES ('Tutorial', 'How-to guides')`);
+
+  db.execute(`INSERT INTO post_categories (post_id, category_id) VALUES (1, 1)`);
+  db.execute(`INSERT INTO post_categories (post_id, category_id) VALUES (2, 1)`);
+  db.execute(`INSERT INTO post_categories (post_id, category_id) VALUES (2, 2)`);
+}
+
 export function getDatabase(): Database {
   if (!globalDB) {
     globalDB = new Database('lovable_db');
+    initializeDefaultSchema(globalDB);
   }
   return globalDB;
 }
 
 export function resetDatabase(): void {
   globalDB = new Database('lovable_db');
+  initializeDefaultSchema(globalDB);
 }
