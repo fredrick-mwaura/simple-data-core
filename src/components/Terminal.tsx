@@ -55,11 +55,11 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(({
           query: sql,
           result: {
             success: false,
-            error: error instanceof Error ? error.message : 'Unknown error',
+            message: error instanceof Error ? error.message : 'Unknown error',
             rows: [],
             columns: [],
             rowCount: 0,
-            duration: 0
+            executionTime: 0
           },
           timestamp: new Date()
         };
@@ -239,7 +239,7 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(({
         {/* Welcome message */}
         {history.length === 0 && (
           <div className="text-muted-foreground mb-4 animate-fade-in">
-            <p className="text-primary font-semibold mb-2">Welcome to LovableDB v1.0</p>
+            <p className="text-primary font-semibold mb-2">Welcome to Datacore v1.0</p>
             <p>A lightweight in-memory RDBMS with SQL support.</p>
             <p className="mt-2 text-xs">
               Supports: CREATE TABLE, INSERT, SELECT, UPDATE, DELETE, JOIN, INDEX
@@ -292,15 +292,15 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(({
         ))}
 
         {/* Input line */}
-        <div className="flex items-start gap-2">
-          <span className="text-primary font-bold select-none">❯</span>
+        <div className="flex items-start gap-2 pt-1">
+          <span className="text-primary font-bold select-none leading-relaxed">❯</span>
           <div className="flex-1 relative">
             <textarea
               ref={inputRef}
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
-              className="w-full bg-transparent border-none outline-none resize-none font-mono text-foreground caret-terminal-cursor"
+              className="w-full bg-transparent border-none outline-none resize-none font-mono text-foreground caret-terminal-cursor overflow-hidden p-0 leading-relaxed"
               placeholder="Enter SQL query or click table to generate query..."
               rows={1}
               style={{
@@ -314,7 +314,7 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(({
               }}
             />
             {input === '' && (
-              <span className="absolute left-0 top-0 w-2 h-5 bg-terminal-cursor animate-blink" />
+              <span className="absolute left-0 top-0 w-2 h-5 bg-terminal-cursor animate-blink mt-0.5" />
             )}
           </div>
         </div>

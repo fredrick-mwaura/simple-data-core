@@ -1,73 +1,169 @@
-# Welcome to your Lovable project
+# Datacore
 
-## Project info
+A minimal **in-memory relational database management system (RDBMS)** with a SQL-like interface, built to demonstrate core database concepts such as schemas, constraints, CRUD operations, and an interactive REPL — all inside a browser-based web app.
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+This project was created as a learning and showcase exercise, not as a production database.
 
-## How can I edit this code?
+---
 
-There are several ways of editing your application.
+## ✨ Features
 
-**Use Lovable**
+### Core RDBMS Capabilities
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
+* **Relational tables with schemas**
 
-Changes made via Lovable will be committed automatically to this repo.
+  * Typed columns (`int`, `string`, `boolean`)
+  * `PRIMARY KEY` support
+  * `UNIQUE` constraints
+  * `NOT NULL` enforcement
 
-**Use your preferred IDE**
+* **CRUD operations**
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+  * `INSERT`
+  * `SELECT`
+  * `UPDATE`
+  * `DELETE`
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+* **Constraint enforcement**
 
-Follow these steps:
+  * Primary key uniqueness
+  * Unique column constraints
+  * Null checks
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+* **Basic indexing**
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+  * Primary and unique keys are internally indexed for fast lookup
 
-# Step 3: Install the necessary dependencies.
-npm i
+* **SQL-like interface**
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+  * Familiar syntax inspired by standard SQL
+
+---
+
+## 🧑‍💻 Interactive SQL REPL
+
+Datacore provides an **interactive SQL terminal** directly in the browser.
+
+You can type SQL commands and immediately see results, errors, and execution feedback.
+
+Example:
+
+```sql
+INSERT INTO users (id, username, email, active)
+VALUES (1, 'alice', 'alice@example.com', true);
+
+UPDATE users
+SET username = 'alice_updated'
+WHERE id = 1;
+
+SELECT * FROM users;
 ```
 
-**Edit a file directly in GitHub**
+---
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+## 📦 Example Schema
 
-**Use GitHub Codespaces**
+```sql
+CREATE TABLE users (
+  id INT PRIMARY KEY,
+  username STRING UNIQUE NOT NULL,
+  email STRING UNIQUE NOT NULL,
+  active BOOLEAN
+);
+```
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+---
 
-## What technologies are used for this project?
+## 🧪 Example Inserts
 
-This project is built with:
+### Single-row insert
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+```sql
+INSERT INTO users (id, username, email, active)
+VALUES (5, 'fred', 'mwaura@fred.com', true);
+```
 
-## How can I deploy this project?
+### Multi-row insert
 
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
+```sql
+INSERT INTO users (id, username, email, active)
+VALUES
+  (6, 'mwangi', 'mwangi@example.com', true),
+  (7, 'john', 'john@example.com', false);
+```
 
-## Can I connect a custom domain to my Lovable project?
+⚠️ **Note:** Extra or nested parentheses will cause errors. Each row must be a flat tuple.
 
-Yes, you can!
+---
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+## ❌ Common Errors
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+### `Column "username" cannot be null`
+
+Occurs when:
+
+* Values are misaligned with column order
+* Extra parentheses cause incorrect parsing
+* A required column is missing
+
+✔️ Fix by ensuring:
+
+* Column order matches value order
+* No extra parentheses
+* All `NOT NULL` columns have values
+
+---
+
+## 🌐 Web Demo
+
+Datacore is demonstrated through a **trivial web application** that:
+
+* Shows table contents visually
+* Reflects changes from SQL commands in real time
+* Acts as both a REPL and a CRUD demo
+
+This satisfies the challenge requirement to demonstrate the database via a web app.
+
+---
+
+## 🛠️ Implementation Notes
+
+* In-memory storage (no persistence)
+* Custom SQL parsing and execution logic
+* No external database libraries used
+* Designed for clarity and learning, not performance
+
+---
+
+## 🚧 Limitations
+
+* No disk persistence
+* No query optimizer
+* Limited join support (if any)
+* Minimal indexing (constraints only)
+
+These trade-offs are intentional to keep the system small and understandable.
+
+---
+
+## 📜 Credits & Disclosure
+
+This project was built by the author as a learning exercise. External tools, libraries, or AI assistance (if any) were used responsibly and are acknowledged where applicable.
+
+---
+
+## 🎯 Challenge Alignment
+
+This project fulfills the challenge requirements by providing:
+
+* A simple RDBMS
+* SQL-like interface with REPL
+* Table schemas and constraints
+* CRUD operations
+* A working web-based demonstration
+
+---
+
+## 📄 License
+
+MIT (or your preferred license)

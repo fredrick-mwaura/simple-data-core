@@ -1,6 +1,6 @@
 /**
  * =============================================================================
- * LovableDB - A Lightweight In-Memory Relational Database Management System
+ * Datacore - A Lightweight In-Memory Relational Database Management System
  * =============================================================================
  * 
  * ARCHITECTURE OVERVIEW:
@@ -667,13 +667,13 @@ function initializeDefaultSchema(db: Database): void {
 
 export function getDatabase(): Database {
   if (!globalDB) {
-    globalDB = new Database('lovable_db');
+    globalDB = new Database('datacore_db');
     initializeDefaultSchema(globalDB);
   }
   return globalDB;
 }
 
 export function resetDatabase(): void {
-  globalDB = new Database('lovable_db');
+  globalDB = new Database('datacore_db');
   initializeDefaultSchema(globalDB);
 }

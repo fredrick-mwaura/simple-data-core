@@ -90,7 +90,7 @@ export const DatabaseExplorer: React.FC<DatabaseExplorerProps> = ({
       {/* Footer */}
       <div className="p-3 border-t border-sidebar-border">
         <div className="text-xs text-muted-foreground">
-          <span className="font-mono">LovableDB</span> v1.0
+          <span className="font-mono">Datacore</span> v1.0
         </div>
       </div>
     </div>
