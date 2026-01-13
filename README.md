@@ -80,7 +80,7 @@ CREATE TABLE users (
 
 ```sql
 INSERT INTO users (id, username, email, active)
-VALUES (5, 'fred', 'mwaura@fred.com', true);
+VALUES (5, 'joe', 'example@mail.com', true);
 ```
 
 ### Multi-row insert
@@ -88,7 +88,7 @@ VALUES (5, 'fred', 'mwaura@fred.com', true);
 ```sql
 INSERT INTO users (id, username, email, active)
 VALUES
-  (6, 'mwangi', 'mwangi@example.com', true),
+  (6, 'james', 'james@example.com', true),
   (7, 'john', 'john@example.com', false);
 ```
 
@@ -161,9 +161,3 @@ This project fulfills the challenge requirements by providing:
 * Table schemas and constraints
 * CRUD operations
 * A working web-based demonstration
-
----
-
-## 📄 License
-
-MIT (or your preferred license)
